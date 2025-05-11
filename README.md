@@ -8,12 +8,22 @@ Core Infra
 ---
 
 Compute
-
 ECS (Fargate) or EC2 Auto Scaling Group: For hosting your app containers or instances.
 
-Optionally:
-EKS (Kubernetes) if you want Kubernetes.
-Lambda for event-driven serverless tasks.
+steps
+
+1. ECR
+2. ECS cluster
+3. task definitions
+4. ECS services
+5. Security Group for
+   - ALB (Allow HTTP/s)
+   - tasks (Allow traffic from ALB or VPC)
+6. IAM Roles
+   - pull images from ecr
+   - write logs to cloudwatch
+   - ECS task execution role
+   - Accessing S3 role
 
 ---
 

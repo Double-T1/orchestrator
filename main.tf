@@ -103,3 +103,74 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private.id
   route_table_id = aws_route_table.private.id
 }
+
+
+resource "aws_ecr_repository" "main" {
+    name = "main"
+}
+
+
+resource "aws_ecs_cluster" "backend" {
+    name = "backend-cluster"
+}
+
+
+# setup a role
+resource "aws_iam_role" "ecs_task_execution" {
+    name = "ecsTaskExecutionRole"
+    assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
+}
+
+data "aws_iam_policy_document" "ecs_assume_role" {
+    statement {
+        actions = ["sts:AssumeRole"]
+        principals {
+            type = "Service"
+            identifiers = ["ecs-tasks.amazonaws.com"]
+        }
+    }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_execution_attach" {
+    role = aws_iam_role.ecs_task_execution
+    policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy" # predefined by aws
+}
+
+resource "aws_ecs_task_definition" "backend" {
+    family = "backend"
+    requires_compatibilities = ["FARGATE"]
+    network_mode = "awsvpc"
+    cpu = "2"
+    memory = "512"
+
+    execution_role_arn = aws_iam_role.ecs_task_execution.arn
+
+    container_definition = jsonencode([
+        {
+            name = "backend"
+            image = "...." # from ecr
+            essential = true
+            portMappings = [
+                {
+                    containerPort = 8000
+                    hostPort = 8000
+                    protocol = "tcp"
+                }
+            ]
+            logConfiguration = {
+                logDriver = "awslogs"
+                options = {
+                    awslogs-group = "/ecs/myapp"
+                    awslogs-region = "ap-northeast-1"
+                    awslogs-stream-prefix = "ecs"
+                }
+            }
+            environment = [
+                {
+                    name = "ENV"
+                    value = "production"
+                }
+            ]
+        }
+    ])
+}
