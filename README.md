@@ -5,6 +5,9 @@ Core Infra
 3. NAT Gateway: For private subnets to access the internet securely (e.g., for updates).
 4. Route Tables: Separate routes for public and private subnets.
 
+5. security group
+6. basic iam roles
+
 ---
 
 Compute
