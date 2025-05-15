@@ -207,3 +207,47 @@ resource "aws_ecs_service" "backend" {
 
 
 #alb, security_group
+
+
+
+# s3
+resource "aws_s3_bucket" "filestore" {
+  bucket = "filestore"
+  tags   = "filestore"
+}
+
+
+resource "aws_s3_bucket_policy" "filestore" {
+  bucket = aws_s3_bucket.filestore
+  policy = aws_s3_iam_policy_document.s3_filestore.json
+}
+
+resource "aws_s3_bucket_ownership_controls" "filestore" {
+  bucket = aws_s3_bucket.filestore.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+
+data "aws_s3_iam_policy_document" "s3_filestore" {
+  statement {
+    actions   = ["s3:getObject"]
+    resources = ["${aws_s3_bucket.filestore.arn}/*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::123456789012:role/my-ecs-task-role"] #example for now
+    }
+  }
+}
+
+
+resource "aws_s3_public_access_block" "filestore" {
+  bucket                  = aws_s3_bucket.filestore.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}

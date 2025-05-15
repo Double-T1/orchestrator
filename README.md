@@ -34,11 +34,11 @@ Storage
 
     S3: For file uploads, logs, static assets, and backups.
 
-    EFS (optional): Shared filesystem across services.
-
     RDS or Aurora: For relational database (PostgreSQL/MySQL).
 
     ElastiCache (Redis): For caching.
+
+    EFS (optional): Shared filesystem across services.
 
 ---
 
