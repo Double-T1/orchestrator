@@ -23,6 +23,8 @@ Questions:
 
 1. setup a VPC with one public subnet and one private subnet
 2. setup s3
+3. setup a ecs
+4. set up a ElastiCache
 
 ##### RDS
 
