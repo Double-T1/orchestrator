@@ -58,7 +58,7 @@ resource "aws_subnet" "private" {
 
 # s3
 resource "aws_s3_bucket" "filestore" {
-  bucket = "will-filestore"
+  bucket        = "will-filestore"
   force_destroy = true
 }
 
@@ -79,8 +79,8 @@ resource "aws_s3_bucket_ownership_controls" "filestore" {
 
 data "aws_iam_policy_document" "s3_filestore" {
   statement {
-    actions   = ["s3:getObject"]
-    effect = "Allow"
+    actions = ["s3:getObject"]
+    effect  = "Allow"
 
     resources = ["${aws_s3_bucket.filestore.arn}/*"]
 
@@ -125,12 +125,44 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy" # predefined by aws
 }
 
-
 resource "aws_iam_role" "ecs_task" {
-  name = "ecsTaskRole"
+  name               = "ecsTaskRole"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
 }
 
+# cache
+resource "aws_elasticache_subnet_group" "redis" {
+  name       = "redis-subnet-group"
+  subnet_ids = [aws_subnet.private.id]
+
+  tags = {
+    Name = "redis-subnet-group"
+  }
+}
+
+
+resource "aws_elasticache_replication_group" "redis" {
+  replication_group_id          = "redis-replication-group"
+  description = "an example group with one replica and not Multi-AZ "
+  engine                        = "redis"
+  engine_version                = "7.0"
+  node_type                     = "cache.t3.micro"
+  num_node_groups = 1
+  replicas_per_node_group = 1
+  automatic_failover_enabled    = true
+  multi_az_enabled              = false
+
+  subnet_group_name    = aws_elasticache_subnet_group.redis.name
+  port                 = 6379
+
+  tags = {
+    Name = "redis-replication-group"
+  }
+}
+
+
+
+# ecs
 # resource "aws_ecs_task_definition" "backend" {
 #   family                   = "backend"
 #   requires_compatibilities = ["FARGATE"]
@@ -172,29 +204,37 @@ resource "aws_iam_role" "ecs_task" {
 #   ])
 # }
 
-resource "aws_ecs_service" "backend" {
-  name                   = "backend"
-  cluster                = aws_ecs_cluster.backend.id
-  task_definition        = aws_ecs_task_definition.backend.arn
-  desired_count          = 2
-  launch_type            = "FARGATE"
-  enable_execute_command = true
+# resource "aws_ecs_service" "backend" {
+#   name                   = "backend"
+#   cluster                = aws_ecs_cluster.backend.id
+#   task_definition        = aws_ecs_task_definition.backend.arn
+#   desired_count          = 2
+#   launch_type            = "FARGATE"
+#   enable_execute_command = true
 
-  network_configuration {
-    subnets          = [aws_subnet.private.id]
-    security_groups  = [aws_security_group.ecs_sg.id]
-    assign_public_ip = false
-  }
+#   network_configuration {
+#     subnets          = [aws_subnet.private.id]
+#     security_groups  = [aws_security_group.ecs_sg.id]
+#     assign_public_ip = false
+#   }
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.app_tg.arn
-    container_name   = "backend"
-    container_port   = 8000
-  }
+#   load_balancer {
+#     target_group_arn = aws_lb_target_group.app_tg.arn
+#     container_name   = "backend"
+#     container_port   = 8000
+#   }
 
-  depends_on = [aws_lb_listener.app_listener]
-}
+#   depends_on = [aws_lb_listener.app_listener]
+# }
 
+# ecr
+# resource "aws_ecr_repository" "main" {
+#   name = "main"
+# }
+
+# resource "aws_cloudwatch_log_group" "backend" {
+#   name = "/ecs/backend"
+# }
 
 # nat gateway
 # resource "aws_eip" "nat" {
@@ -248,24 +288,5 @@ resource "aws_ecs_service" "backend" {
 #   subnet_id      = aws_subnet.private.id
 #   route_table_id = aws_route_table.private.id
 # }
-
-
-# ecr
-# resource "aws_ecr_repository" "main" {
-#   name = "main"
-# }
-
-
-
-
-
-# resource "aws_cloudwatch_log_group" "backend" {
-#   name = "/ecs/backend"
-# }
-
-
-
-# #alb, security_group
-
 
 
