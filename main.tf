@@ -35,11 +35,15 @@ data "aws_availability_zones" "available" {
 }
 
 resource "aws_subnet" "public" {
+  count = 3
   vpc_id                  = aws_vpc.main.id
   map_public_ip_on_launch = true
-  availability_zone       = data.aws_availability_zones.available.names[0]
-  cidr_block              = "10.0.1.0/24"
-
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  cidr_block = cidrsubnet(
+    aws_vpc.main.cidr_block,
+    3,
+    count.index,
+  )
 
   tags = {
     Name = "main"
@@ -47,9 +51,14 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_subnet" "private" {
+  count = 3
   vpc_id            = aws_vpc.main.id
-  availability_zone = data.aws_availability_zones.available.names[0]
-  cidr_block        = "10.0.2.0/24"
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+  cidr_block        = cidrsubnet(
+    aws_vpc.main.cidr_block,
+    3,
+    count.index + 3,
+  )
 
   tags = {
     Name = "main"
@@ -140,7 +149,6 @@ resource "aws_elasticache_subnet_group" "redis" {
   }
 }
 
-
 resource "aws_elasticache_replication_group" "redis" {
   replication_group_id          = "redis-replication-group"
   description = "an example group with one replica and not Multi-AZ "
@@ -157,6 +165,16 @@ resource "aws_elasticache_replication_group" "redis" {
 
   tags = {
     Name = "redis-replication-group"
+  }
+}
+
+# rds
+resource "aws_db_subnet_group" {
+  name = "test-db-subnet-group"
+  subnet_ids = aws_subnet.private[*].id
+
+  tags {
+    Name = "db-subnet-group"
   }
 }
 
