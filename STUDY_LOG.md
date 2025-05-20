@@ -34,7 +34,11 @@ Questions:
 
 ### 5/20
 
-#### Actions
+#### Apply
+
+N/A
+
+#### Code
 
 1. Setup RDS for PG
 2. update private and public subnet to span across multiple az
@@ -52,6 +56,12 @@ Questions:
 ##### Security Group
 
 - Security groups are VPC-scoped
--
+- protocol == -1 meant all protocol, tcp, udp, icmp and all
 
-##### ElastiCache
+#### Todo
+
+1. RDS (Continue)
+   - Monitoring
+   - Credentials in Secret Manager
+   - Apply
+2. ALB (New)

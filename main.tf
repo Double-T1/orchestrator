@@ -169,12 +169,54 @@ resource "aws_elasticache_replication_group" "redis" {
 }
 
 # rds
-resource "aws_db_subnet_group" {
+resource "aws_db_subnet_group" "postgres" {
   name = "test-db-subnet-group"
   subnet_ids = aws_subnet.private[*].id
 
   tags {
     Name = "db-subnet-group"
+  }
+}
+
+resource "aws_db_instance" "postgres" {
+  identifier = "test-db-postgres"
+  engine = "postgres"
+  engine_version = "16.3"
+  allocated_storage = 20
+  storage_type = "gp2"
+  instance_class = "db.t3.micro"
+
+  db_subnet_group_name = aws_db_subnet_group.postgres.name
+  vpc_security_group_ids = [aws_security_group.postgres.id]
+  
+  skip_final_snapshot = true # for testing only
+  publicly_accessible = false
+
+  tags {
+    Name = "test-db"
+  }
+}
+
+resource "aws_security_group" "postgres" {
+  name = "postgres-sg"
+  description = "Allow access to RDS"
+  vpc_id = aws_vpc.main.id
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["YOUR_IP/32"] # or allow app server CIDR
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "rds-sg"
   }
 }
 
