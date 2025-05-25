@@ -65,3 +65,32 @@ N/A
    - Credentials in Secret Manager
    - Apply
 2. ALB (New)
+
+### 5/25
+
+#### Apply
+
+N/A
+
+#### Code
+
+1. setup elasticache security group for future computing instance to access
+
+#### Questions
+
+##### ECS
+
+- why use network configuration to set up security group in aws_ecs_service?
+  => network_mode = "awsvpc", which is required for Fargate, means every task gets its own ENI(Elastic Network Interface). That's why we define the security group for each tasks independently thru their network config.
+
+##### Elasticache
+
+- in security group of ingress/egress, from_port and to_port defines the range of port allowed
+
+#### Todo
+
+1. RDS (Continue)
+   - Monitoring
+   - Credentials in Secret Manager
+   - Apply
+2. ALB (New)

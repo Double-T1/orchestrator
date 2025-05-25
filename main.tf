@@ -35,7 +35,7 @@ data "aws_availability_zones" "available" {
 }
 
 resource "aws_subnet" "public" {
-  count = 3
+  count                   = 3
   vpc_id                  = aws_vpc.main.id
   map_public_ip_on_launch = true
   availability_zone       = data.aws_availability_zones.available.names[count.index]
@@ -51,10 +51,10 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_subnet" "private" {
-  count = 3
+  count             = 3
   vpc_id            = aws_vpc.main.id
   availability_zone = data.aws_availability_zones.available.names[count.index]
-  cidr_block        = cidrsubnet(
+  cidr_block = cidrsubnet(
     aws_vpc.main.cidr_block,
     3,
     count.index + 3,
@@ -150,27 +150,42 @@ resource "aws_elasticache_subnet_group" "redis" {
 }
 
 resource "aws_elasticache_replication_group" "redis" {
-  replication_group_id          = "redis-replication-group"
-  description = "an example group with one replica and not Multi-AZ "
-  engine                        = "redis"
-  engine_version                = "7.0"
-  node_type                     = "cache.t3.micro"
-  num_node_groups = 1
-  replicas_per_node_group = 1
-  automatic_failover_enabled    = true
-  multi_az_enabled              = false
+  replication_group_id       = "redis-replication-group"
+  description                = "an example group with one replica and not Multi-AZ "
+  engine                     = "redis"
+  engine_version             = "7.0"
+  node_type                  = "cache.t3.micro"
+  num_node_groups            = 1
+  replicas_per_node_group    = 1
+  automatic_failover_enabled = true
+  multi_az_enabled           = false
 
-  subnet_group_name    = aws_elasticache_subnet_group.redis.name
-  port                 = 6379
+  subnet_group_name = aws_elasticache_subnet_group.redis.name
+  port              = 6379
+  security_group_id = aws_security_group.redis.id
 
   tags = {
     Name = "redis-replication-group"
   }
 }
 
+resource "aws_security_group" "redis" {
+  name        = "redis-sg"
+  description = "Allow redis access from ECS tasks"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = ["YOUR ECS/EC2 security group"]
+    description     = "allow ecs tasks to connect to Redis"
+  }
+}
+
 # rds
 resource "aws_db_subnet_group" "postgres" {
-  name = "test-db-subnet-group"
+  name       = "test-db-subnet-group"
   subnet_ids = aws_subnet.private[*].id
 
   tags {
@@ -179,16 +194,16 @@ resource "aws_db_subnet_group" "postgres" {
 }
 
 resource "aws_db_instance" "postgres" {
-  identifier = "test-db-postgres"
-  engine = "postgres"
-  engine_version = "16.3"
+  identifier        = "test-db-postgres"
+  engine            = "postgres"
+  engine_version    = "16.3"
   allocated_storage = 20
-  storage_type = "gp2"
-  instance_class = "db.t3.micro"
+  storage_type      = "gp2"
+  instance_class    = "db.t3.micro"
 
-  db_subnet_group_name = aws_db_subnet_group.postgres.name
+  db_subnet_group_name   = aws_db_subnet_group.postgres.name
   vpc_security_group_ids = [aws_security_group.postgres.id]
-  
+
   skip_final_snapshot = true # for testing only
   publicly_accessible = false
 
@@ -198,9 +213,9 @@ resource "aws_db_instance" "postgres" {
 }
 
 resource "aws_security_group" "postgres" {
-  name = "postgres-sg"
+  name        = "postgres-sg"
   description = "Allow access to RDS"
-  vpc_id = aws_vpc.main.id
+  vpc_id      = aws_vpc.main.id
   ingress {
     from_port   = 5432
     to_port     = 5432
