@@ -255,6 +255,32 @@ resource "aws_security_group" "service" {
   }
 }
 
+# secret manager
+# 1. define a secret manager
+resource "aws_secretsmanager_secret" "pg_credentials" {
+  name = "pg-db-credentials"
+  description = "PostgreSQL credentials for my RDS instance"
+}
+
+# 2. random password
+resource "random_password" "db_master" {
+  length = 16
+  special = false
+}
+
+
+# 3. create the secret value
+resource "aws_secretsmanager_secret_version" "pg_credentials_version" {
+  secret_id = aws_secretsmanager_secret.pg_credentials.id
+  secret_string = jsonencode({
+    username = "admin"
+    password = random_password.db_master.result
+  })
+}
+
+
+# 4. allow IAM roles or services to access secret value
+
 # ecs
 # resource "aws_ecs_task_definition" "backend" {
 #   family                   = "backend"

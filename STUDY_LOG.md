@@ -101,10 +101,21 @@ N/A
 
 #### Code
 
+1. service security group
+2.
+
 #### Questions
+
+##### DB in general
+
+- schemas vs dbs
 
 ##### Security Group
 
 - if ingress is not defined => no inbound access at all
+
+##### RDS
+
+- with random_password, why special=True, what does this do? -> tp include special characters
 
 #### Todo
