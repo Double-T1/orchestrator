@@ -142,7 +142,7 @@ resource "aws_iam_role" "ecs_task" {
 # cache
 resource "aws_elasticache_subnet_group" "redis" {
   name       = "redis-subnet-group"
-  subnet_ids = [aws_subnet.private.id]
+  subnet_ids = aws_subnet.private[*].id
 
   tags = {
     Name = "redis-subnet-group"
@@ -162,7 +162,7 @@ resource "aws_elasticache_replication_group" "redis" {
 
   subnet_group_name = aws_elasticache_subnet_group.redis.name
   port              = 6379
-  security_group_id = aws_security_group.redis.id
+  security_group_ids = [aws_security_group.redis.id]
 
   tags = {
     Name = "redis-replication-group"
@@ -178,7 +178,7 @@ resource "aws_security_group" "redis" {
     from_port       = 6379
     to_port         = 6379
     protocol        = "tcp"
-    security_groups = ["YOUR ECS/EC2 security group"]
+    security_groups = [aws_security_group.service.id]
     description     = "allow ecs tasks to connect to Redis"
   }
 }
@@ -188,7 +188,7 @@ resource "aws_db_subnet_group" "postgres" {
   name       = "test-db-subnet-group"
   subnet_ids = aws_subnet.private[*].id
 
-  tags {
+  tags = {
     Name = "db-subnet-group"
   }
 }
@@ -207,7 +207,7 @@ resource "aws_db_instance" "postgres" {
   skip_final_snapshot = true # for testing only
   publicly_accessible = false
 
-  tags {
+  tags = {
     Name = "test-db"
   }
 }
@@ -220,7 +220,9 @@ resource "aws_security_group" "postgres" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["YOUR_IP/32"] # or allow app server CIDR
+    security_groups = [
+      aws_security_group.service.id
+    ]
   }
 
   egress {
@@ -235,7 +237,23 @@ resource "aws_security_group" "postgres" {
   }
 }
 
+# ecs
+resource "aws_security_group" "service" {
+  name = "service-sg"
+  description = "security group for computing services"
+  vpc_id = aws_vpc.main.id
 
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "service-sg"
+  }
+}
 
 # ecs
 # resource "aws_ecs_task_definition" "backend" {

@@ -94,3 +94,17 @@ N/A
    - Credentials in Secret Manager
    - Apply
 2. ALB (New)
+
+### 5/26
+
+#### Apply
+
+#### Code
+
+#### Questions
+
+##### Security Group
+
+- if ingress is not defined => no inbound access at all
+
+#### Todo
