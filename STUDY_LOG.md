@@ -110,12 +110,16 @@ N/A
 
 - schemas vs dbs
 
-##### Security Group
+##### Security Group, Secrets Manger
 
 - if ingress is not defined => no inbound access at all
+- how does github CD fetch secretsmanager? => when using codebuild, we simply set the IAM role of codebuild, and set the rules for it in policy_document
 
 ##### RDS
 
 - with random_password, why special=True, what does this do? -> tp include special characters
 
 #### Todo
+
+2. how does ECS connect to db??
+3. ECS: setup a running ecs
