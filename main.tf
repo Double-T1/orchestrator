@@ -160,8 +160,8 @@ resource "aws_elasticache_replication_group" "redis" {
   automatic_failover_enabled = true
   multi_az_enabled           = false
 
-  subnet_group_name = aws_elasticache_subnet_group.redis.name
-  port              = 6379
+  subnet_group_name  = aws_elasticache_subnet_group.redis.name
+  port               = 6379
   security_group_ids = [aws_security_group.redis.id]
 
   tags = {
@@ -217,9 +217,9 @@ resource "aws_security_group" "postgres" {
   description = "Allow access to RDS"
   vpc_id      = aws_vpc.main.id
   ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
+    from_port = 5432
+    to_port   = 5432
+    protocol  = "tcp"
     security_groups = [
       aws_security_group.service.id
     ]
@@ -239,14 +239,14 @@ resource "aws_security_group" "postgres" {
 
 # ecs
 resource "aws_security_group" "service" {
-  name = "service-sg"
+  name        = "service-sg"
   description = "security group for computing services"
-  vpc_id = aws_vpc.main.id
+  vpc_id      = aws_vpc.main.id
 
   egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -258,13 +258,13 @@ resource "aws_security_group" "service" {
 # secret manager
 # 1. define a secret manager
 resource "aws_secretsmanager_secret" "pg_credentials" {
-  name = "pg-db-credentials"
+  name        = "pg-db-credentials"
   description = "PostgreSQL credentials for my RDS instance"
 }
 
 # 2. random password
 resource "random_password" "db_master" {
-  length = 16
+  length  = 16
   special = false
 }
 
@@ -276,6 +276,36 @@ resource "aws_secretsmanager_secret_version" "pg_credentials_version" {
     username = "admin"
     password = random_password.db_master.result
   })
+}
+
+# ecr
+# 1. setup ecr
+resource "aws_ecr_repository" "backend" {
+  name = "backend"
+}
+
+# 2. setup ecr lifecycle policy
+resource "aws_ecr_lifecycle_policy" "backend" {
+  resource = aws_ecr_repository.backend.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1,
+        description  = "Expire untagged image after 14 days",
+        selection = {
+          tagStatus   = "untagged",
+          countType   = "sinceImagePushed",
+          countUnit   = "days",
+          countNumber = 14
+        },
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+
 }
 
 

@@ -118,8 +118,3 @@ N/A
 ##### RDS
 
 - with random_password, why special=True, what does this do? -> tp include special characters
-
-#### Todo
-
-2. how does ECS connect to db??
-3. ECS: setup a running ecs
